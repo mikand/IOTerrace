@@ -1,0 +1,24 @@
+@media (min-width: 768px) {
+  .modal-xl {
+      width: 85%;
+      max-width:1900px;
+  }
+}
+
+.footer {
+    position: fixed;
+    right: 0;
+    top: 0;
+    color: gray;
+    text-align: center;
+}
+
+.footer a {
+    color: gray;
+}
+
+.dataChartContainer{
+    height: 100%;
+    width: 90%;
+    margin: 0 auto;
+}

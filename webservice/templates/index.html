@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <title>IOTerrace</title>
+
+    <!-- Required meta tags -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- jquery -->
+    <script src="{{url_for('static', filename='jquery-3.2.1.min.js')}}"></script>
+
+    <!-- chart.js -->
+    <script src="{{url_for('static', filename='Chart.bundle.min.js')}}"></script>
+    <!-- moment.js -->
+    <script src="{{url_for('static', filename='moment.min.js')}}"></script>
+
+    <!-- bootstrap -->
+    <link rel="stylesheet" href="{{url_for('static', filename='bootstrap.min.css')}}">
+    <script src="{{url_for('static', filename='popper.min.js')}}"></script>
+    <script src="{{url_for('static', filename='bootstrap.min.js')}}"></script>
+
+    <!-- FontAwesome -->
+    <script defer src="{{url_for('static', filename='font-awesome.js')}}"></script>
+
+    <!-- Notify -->
+    <script defer src="{{url_for('static', filename='notify.min.js')}}"></script>
+
+    <!-- js code -->
+    <script src="{{url_for('static', filename='epb.js')}}"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='epb.css')}}" />
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div id="titlediv" class="col-6">
+          <h1>IOTerrace</h1>
+        </div>
+      </div>
+
+      <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+          {% for s in sensors %}
+          <a class="nav-item nav-link {{'active' if s == selected_sensor else ''}}" id="nav-live-tab-{{s.id}}" data-toggle="tab" href="#nav-live-{{s.id}}" role="tab" aria-controls="nav-live-{{s.id}}" aria-selected="{{'true' if s == selected_sensor else 'false'}}"><span class="fas fa-chart-line"></span>{{s.name}}</a>
+          {% endfor %}
+          <a class="nav-item nav-link" id="nav-options-tab" data-toggle="tab" href="#nav-options" role="tab" aria-controls="nav-options" aria-selected="false"><span class="fas fa-cogs"></span> Opzioni</a>
+        </div>
+      </nav>
+      <div class="tab-content" id="nav-tabContent">
+        {% for s in sensors %}
+        <div class="tab-pane fade show {{'active' if s == selected_sensor else ''}}" id="nav-live-{{s.id}}" role="tabpanel" aria-labelledby="nav-live-tab-{{s.id}}">
+          <div class="dataChartContainer">
+            {{s.name}}
+            <canvas id="dataChart-{{s.id}}"></canvas>
+          </div>
+        </div>
+        {% endfor %}
+        <div class="tab-pane fade {{'show active 'if default_tab=='options' else ''}}" id="nav-options" role="tabpanel" aria-labelledby="nav-options-tab">
+          <br />
+          <form id="option-form" method="POST" action="/set_options">
+            {%for s in sensors %}
+            <div class="form-row justify-content-start">
+              <div class="form-group col-md-5">
+                <label for="name-s.id">Name for {{s.kind}} sensor on port {{s.port}}:</label>
+                <input type="text" name="optval_{{s.id}}" class="form-control" id="name-{{s.id}}" placeholder="{{s.name}}"/>
+              </div>
+            </div>
+            {%endfor%}
+            <div class="form-row justify-content-start">
+              <div class="form-group col-md-5">
+                <button type="button" class="btn btn-secondary" id="btn-option-reset"><span class="fas fa-undo"></span> Reset current values</button>
+                <button type="submit" class="btn btn-primary"><span class="fas fa-save"></span> Save changes</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script>
+      var js_date_format = 'YYYY/MM/DD';
+      var roundingFactor = Math.pow(10, 2);
+      function graphOptions() {
+        return {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+	            label: 'Temperatura Forno',
+	            backgroundColor: 'red',
+	            borderColor: 'red',
+	            fill: false,
+	            data: [],
+	        }],
+                yHighlightRange : {
+                    begin: 0,
+                    end: 100
+                }
+            },
+            showLine : true,
+            options: {
+                animation: false,
+                elements: {
+                    line: {
+                        tension: 0, // disables bezier curves
+                    }
+                },
+                responsive: true,
+	        scales: {
+		    xAxes: [{
+		        type: 'time',
+                        distribution: 'linear',
+                        display: true,
+                        time: {
+                            unit: 'second',
+                            displayFormats: {
+                                second: 'YYYY/MM/DD'
+                            }
+                        },
+		        scaleLabel: {
+			    display: true,
+			    labelString: 'Data e Ora'
+		        },
+                        ticks: {
+                            autoSkip: true,
+			    source: 'labels'
+		        }
+		    }],
+		    yAxes: [{
+		        display: true,
+		        scaleLabel: {
+			    display: true,
+			    labelString: 'Temperatura (\u2103)'
+		        },
+                        ticks: {
+                            suggestedMin: 0,
+                            suggestedMax: 2
+                        }
+		    }]
+	        }
+	    }
+        }
+      }
+
+      {% for s in sensors %}
+      makeChart("#dataChart-{{s.id}}", {{s.port}})
+      {% endfor %}
+    </script>
+
+  </body>
+</html>
