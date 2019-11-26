@@ -48,4 +48,6 @@ if _created:
     _session = Session()
     for i in range(8):
         _session.add(Sensor(name='Sensor %s' % i, port=i, kind='humidity'))
-        _session.commit()
+    _session.add(Sensor(name='Temperature', port=8, kind='temperature'))
+    _session.add(Sensor(name='Air Humidity', port=9, kind='air-temperature'))
+    _session.commit()
