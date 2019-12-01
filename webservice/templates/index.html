@@ -12,6 +12,8 @@
 
     <!-- chart.js -->
     <script src="{{url_for('static', filename='Chart.bundle.min.js')}}"></script>
+    <script src="{{url_for('static', filename='chartjs-plugin-colorschemes.min.js')}}"></script>
+
     <!-- moment.js -->
     <script src="{{url_for('static', filename='moment.min.js')}}"></script>
 
@@ -40,22 +42,18 @@
 
       <nav>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
-          {% for s in sensors %}
-          <a class="nav-item nav-link {{'active' if s == selected_sensor else ''}}" id="nav-live-tab-{{s.id}}" data-toggle="tab" href="#nav-live-{{s.id}}" role="tab" aria-controls="nav-live-{{s.id}}" aria-selected="{{'true' if s == selected_sensor else 'false'}}"><span class="fas fa-chart-line"></span>{{s.name}}</a>
-          {% endfor %}
+          <a class="nav-item nav-link active" id="nav-live-tab-data" data-toggle="tab" href="#nav-live-data" role="tab" aria-controls="nav-live-data" aria-selected="true"><span class="fas fa-chart-line"></span>Data</a>
           <a class="nav-item nav-link" id="nav-options-tab" data-toggle="tab" href="#nav-options" role="tab" aria-controls="nav-options" aria-selected="false"><span class="fas fa-cogs"></span> Opzioni</a>
         </div>
       </nav>
       <div class="tab-content" id="nav-tabContent">
-        {% for s in sensors %}
-        <div class="tab-pane fade show {{'active' if s == selected_sensor else ''}}" id="nav-live-{{s.id}}" role="tabpanel" aria-labelledby="nav-live-tab-{{s.id}}">
+        <div class="tab-pane fade show active" id="nav-live-data" role="tabpanel" aria-labelledby="nav-live-tab-data">
           <div class="dataChartContainer">
-            {{s.name}}
-            <canvas id="dataChart-{{s.id}}"></canvas>
+            Data
+            <canvas id="dataChart-data"></canvas>
           </div>
         </div>
-        {% endfor %}
-        <div class="tab-pane fade {{'show active 'if default_tab=='options' else ''}}" id="nav-options" role="tabpanel" aria-labelledby="nav-options-tab">
+        <div class="tab-pane fade" id="nav-options" role="tabpanel" aria-labelledby="nav-options-tab">
           <br />
           <form id="option-form" method="POST" action="/set_options">
             {%for s in sensors %}
@@ -79,18 +77,22 @@
     <script>
       var js_date_format = 'YYYY/MM/DD';
       var roundingFactor = Math.pow(10, 2);
+      var num_labels = 30;
       function graphOptions() {
         return {
             type: 'line',
             data: {
-                labels: [],
-                datasets: [{
-	            label: 'Temperatura Forno',
-	            backgroundColor: 'red',
-	            borderColor: 'red',
-	            fill: false,
-	            data: [],
-	        }],
+                datasets: [
+                {%for s in sensors %}
+                {
+                    label: '{{s.name}}',
+                    fill: false,
+                    data: [],
+                    yAxisID: '{{s.kind}}'
+                }
+                {{',' if s != sensors[-1] else ''}}
+                {%endfor%}
+                ],
                 yHighlightRange : {
                     begin: 0,
                     end: 100
@@ -98,6 +100,11 @@
             },
             showLine : true,
             options: {
+                plugins: {
+                    colorschemes: {
+                        scheme: 'brewer.Paired12'
+                    }
+                },
                 animation: false,
                 elements: {
                     line: {
@@ -125,25 +132,43 @@
 			    source: 'labels'
 		        }
 		    }],
-		    yAxes: [{
+                    yAxes: [{
+                        id: 'temperature',
+                        position: 'left',
 		        display: true,
 		        scaleLabel: {
 			    display: true,
-			    labelString: 'Temperatura (\u2103)'
+			    labelString: 'Temperature (\u2103)'
+		        },
+                        ticks: {
+                            suggestedMin: -5,
+                            suggestedMax: 40
+                        }
+                      },
+                      {
+                        id: 'humidity',
+                        position: 'right',
+                        display: true,
+                        // grid line settings
+			gridLines: {
+			  drawOnChartArea: false, // only want the grid lines for one axis to show up
+			},
+		        scaleLabel: {
+			    display: true,
+			    labelString: 'Humidity (%)'
 		        },
                         ticks: {
                             suggestedMin: 0,
-                            suggestedMax: 2
+                            suggestedMax: 100
                         }
-		    }]
+                     },
+                   ]
 	        }
 	    }
         }
       }
 
-      {% for s in sensors %}
-      makeChart("#dataChart-{{s.id}}", {{s.port}})
-      {% endfor %}
+      makeChart("#dataChart-data", [1,2,3,4,5,6,7,8,9])
     </script>
 
   </body>

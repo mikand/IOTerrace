@@ -1,5 +1,6 @@
-var charts = {};
+var chart = null;
 var lastUpdate = {};
+var activeSensors = null;
 
 
 function roundDatum(x) {
@@ -7,24 +8,20 @@ function roundDatum(x) {
 }
 
 
-function makeChart(id, port) {
-    charts[port] = new Chart($(id)[0].getContext('2d'), graphOptions());
-    lastUpdate[port] = 0;
+function makeChart(id, sensors) {
+    chart = new Chart($(id)[0].getContext('2d'), graphOptions());
+    activeSensors = sensors;
+    for (var s in sensors) {
+        lastUpdate[s] = 0;
+    }
     update();
 }
 
-function addData(chart, label, data) {
-    chart.data.labels.push(label);
-    chart.data.datasets.forEach((dataset) => {
-        dataset.data.push(data);
-    });
-}
-
-function clearData(chart) {
-    chart.data.labels.length = 0;
-    chart.data.datasets.forEach((dataset) => {
-        dataset.data.length = 0;
-    });
+function addDatum(chart, sensor, l, d) {
+    chart.data.datasets[sensor].data.push({x:l, y:d});
+    if (chart.data.datasets[sensor].data.length > num_labels) {
+        chart.data.datasets[sensor].data.splice(0, 1);
+    }
 }
 
 function notify(str) {
@@ -60,22 +57,22 @@ function notify(str) {
 }
 
 function update() {
-    for (var port in charts) {
+    for (var port in activeSensors) {
         $.getJSON("/get_readings/" + port + '/' + lastUpdate[port], function( msg ) {
             if (msg.status == "OK") {
                 var data = msg.data;
                 for (var i=0; i<data.length; i++) {
                     x = moment.unix(data[i].time)
                     v = roundDatum(data[i].value);
-                    addData(charts[msg.port], x, {t:x.valueOf(), y:v});
+                    addDatum(chart, msg.port, x, v);
                     if (data[i].time > lastUpdate[msg.port]) {
                         lastUpdate[msg.port] = data[i].time;
                     }
                 }
-                charts[msg.port].update();
+                chart.update();
             }
             else {
-                notify("Errore: " + msg.status);
+                notify("Error: " + msg.status);
             }
         });
     }
@@ -83,44 +80,5 @@ function update() {
 
 
 $(document).ready(function() {
-
-    // The original draw function for the line chart. This will be applied after we have drawn our highlight range (as a rectangle behind the line chart).
-    var originalLineDraw = Chart.controllers.line.prototype.draw;
-    // Extend the line chart, in order to override the draw function.
-    Chart.helpers.extend(Chart.controllers.line.prototype, {
-        draw : function() {
-            var chart = this.chart;
-            // Get the object that determines the region to highlight.
-            var yHighlightRange = chart.config.data.yHighlightRange;
-
-            // If the object exists.
-            if (yHighlightRange !== undefined) {
-                var ctx = chart.chart.ctx;
-
-                var yRangeBegin = yHighlightRange.begin;
-                var yRangeEnd = yHighlightRange.end;
-
-                var xaxis = chart.scales['x-axis-0'];
-                var yaxis = chart.scales['y-axis-0'];
-
-                var yRangeBeginPixel = yaxis.getPixelForValue(yRangeBegin);
-                var yRangeEndPixel = yaxis.getPixelForValue(yRangeEnd);
-
-                ctx.save();
-
-                // The fill style of the rectangle we are about to fill.
-                ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
-                // Fill the rectangle that represents the highlight region. The parameters are the closest-to-starting-point pixel's x-coordinate,
-                // the closest-to-starting-point pixel's y-coordinate, the width of the rectangle in pixels, and the height of the rectangle in pixels, respectively.
-                ctx.fillRect(xaxis.left, Math.min(yRangeBeginPixel, yRangeEndPixel), xaxis.right - xaxis.left, Math.max(yRangeBeginPixel, yRangeEndPixel) - Math.min(yRangeBeginPixel, yRangeEndPixel));
-
-                ctx.restore();
-            }
-
-            // Apply the original draw function for the line chart.
-            originalLineDraw.apply(this, arguments);
-        }
-    });
-
-    setInterval(update, 1000);
+    setInterval(update, 10000);
 });

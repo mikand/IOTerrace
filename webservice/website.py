@@ -14,6 +14,7 @@ def index():
     sensors = session.query(dm.Sensor).all()
     return render_template('index.html',
                            sensors=sensors,
+                           num_sensors=len(sensors),
                            selected_sensor=sensors[0])
 
 
@@ -31,6 +32,7 @@ def get_readings(sensor_port, since=0):
         res['data'] = [{"time" : x.time.timestamp(),
                         "value" : x.value}
                        for x in sensor.readings if x.time.timestamp() > since]
+        res['data'] = res['data'][-30:]
     return jsonify(res)
 
 

@@ -12,14 +12,14 @@
 #define SENSOR_PIN           A0
 #define DRY_SENSOR_READ      854
 #define WATER_SENSOR_READ    451
-#define SENSOR_READ_INTERVAL 5000
+#define SENSOR_READ_INTERVAL 30000
 
 #define DHT_PIN D1
 
 const int SELECTION_PINS[] = {D6, D7, D8};
 #define NUM_SELECTION_PINS 3
 #define NUM_SENSORS 8
-#define MULTIPLEXER_DELAY 1000
+#define MULTIPLEXER_DELAY 500
 
 const String HOSTNAME = "https://ioterrace.micheli.website";
 
@@ -139,7 +139,7 @@ void loop(void) {
   Serial.println(humidity);
   Serial.println(F("----"));
 
-  sendMeasure(9, temperature);
+  sendMeasure(8, temperature);
   sendMeasure(9, humidity);
 
   delay(SENSOR_READ_INTERVAL);
