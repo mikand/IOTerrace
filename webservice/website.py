@@ -11,11 +11,13 @@ session = dm.Session()
 
 @app.route('/')
 def index():
-    sensors = session.query(dm.Sensor).all()
+    all_sensors = session.query(dm.Sensor).all()
+    sensors = [s for s in all_sensors if s.enabled]
     return render_template('index.html',
+                           all_sensors=all_sensors,
                            sensors=sensors,
-                           num_sensors=len(sensors),
-                           selected_sensor=sensors[0])
+                           active_sensors=', '.join(str(s.port) for s in sensors),
+                           num_sensors=len(sensors))
 
 
 @app.route('/get_readings/<int:sensor_port>')
@@ -32,7 +34,7 @@ def get_readings(sensor_port, since=0):
         res['data'] = [{"time" : x.time.timestamp(),
                         "value" : x.value}
                        for x in sensor.readings if x.time.timestamp() > since]
-        res['data'] = res['data'][-30:]
+        res['data'] = res['data'][-48:]
     return jsonify(res)
 
 
@@ -47,13 +49,17 @@ def add_reading(sensor_port, value):
 
 @app.route('/set_options', methods=['GET', 'POST'])
 def set_options():
-    for k, v in request.form.items():
-        if k.startswith('optval_') and v is not None and len(v):
-            id_ = int(k[len('optval_'):])
-            c = session.query(dm.Sensor).filter_by(id=id_).first()
-            c.name = v
-            session.add(c)
-            session.commit()
+    all_sensors = session.query(dm.Sensor).all()
+    for s in all_sensors:
+        nk = 'optval_%s' % s.id
+        ek = 'enabled_%s' % s.id
+        name = request.form[nk]
+        enabled = ek in request.form and request.form[ek] == 'enabled'
+        if name:
+            s.name = name
+        s.enabled = enabled
+        session.add(s)
+    session.commit()
     return redirect(url_for('index'))
 
 

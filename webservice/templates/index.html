@@ -8,7 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- jquery -->
-    <script src="{{url_for('static', filename='jquery-3.2.1.min.js')}}"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
 
     <!-- chart.js -->
     <script src="{{url_for('static', filename='Chart.bundle.min.js')}}"></script>
@@ -18,9 +19,9 @@
     <script src="{{url_for('static', filename='moment.min.js')}}"></script>
 
     <!-- bootstrap -->
-    <link rel="stylesheet" href="{{url_for('static', filename='bootstrap.min.css')}}">
-    <script src="{{url_for('static', filename='popper.min.js')}}"></script>
-    <script src="{{url_for('static', filename='bootstrap.min.js')}}"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
     <!-- FontAwesome -->
     <script defer src="{{url_for('static', filename='font-awesome.js')}}"></script>
@@ -56,13 +57,20 @@
         <div class="tab-pane fade" id="nav-options" role="tabpanel" aria-labelledby="nav-options-tab">
           <br />
           <form id="option-form" method="POST" action="/set_options">
-            {%for s in sensors %}
-            <div class="form-row justify-content-start">
-              <div class="form-group col-md-5">
-                <label for="name-s.id">Name for {{s.kind}} sensor on port {{s.port}}:</label>
+            {%for s in all_sensors %}
+
+            <div class="form-group col-md-5">
+              <label for="name-{{s.id}}" class="col-form-label">Name for {{s.kind}} sensor on port {{s.port}}:</label>
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <div class="input-group-text">
+                    <input type="checkbox" name="enabled_{{s.id}}" {{'checked' if s.enabled else ''}} aria-label="Enabled" value="enabled"> &nbsp;Enabled
+                  </div>
+                </div>
                 <input type="text" name="optval_{{s.id}}" class="form-control" id="name-{{s.id}}" placeholder="{{s.name}}"/>
               </div>
             </div>
+
             {%endfor%}
             <div class="form-row justify-content-start">
               <div class="form-group col-md-5">
@@ -75,20 +83,20 @@
       </div>
     </div>
     <script>
-      var js_date_format = 'YYYY/MM/DD';
+      var js_date_format = "YYYY/MM/DD";
       var roundingFactor = Math.pow(10, 2);
-      var num_labels = 30;
+      var num_labels = 48;
       function graphOptions() {
         return {
-            type: 'line',
+            type: "line",
             data: {
                 datasets: [
                 {%for s in sensors %}
                 {
-                    label: '{{s.name}}',
+                    label: "{{s.name}}",
                     fill: false,
                     data: [],
-                    yAxisID: '{{s.kind}}'
+                    yAxisID: "{{s.kind}}"
                 }
                 {{',' if s != sensors[-1] else ''}}
                 {%endfor%}
@@ -102,7 +110,7 @@
             options: {
                 plugins: {
                     colorschemes: {
-                        scheme: 'brewer.Paired12'
+                        scheme: "tableau.Classic10"
                     }
                 },
                 animation: false,
@@ -114,40 +122,32 @@
                 responsive: true,
 	        scales: {
 		    xAxes: [{
-		        type: 'time',
-                        distribution: 'linear',
+		        type: "time",
+                        distribution: "linear",
                         display: true,
                         time: {
-                            unit: 'second',
+                            unit: "hour",
                             displayFormats: {
-                                second: 'YYYY/MM/DD'
+                                hour: "HH:mm DD/MM/YY"
                             }
                         },
 		        scaleLabel: {
 			    display: true,
-			    labelString: 'Data e Ora'
-		        },
-                        ticks: {
-                            autoSkip: true,
-			    source: 'labels'
+			    labelString: "Date and time"
 		        }
 		    }],
                     yAxes: [{
-                        id: 'temperature',
-                        position: 'left',
+                        id: "temperature",
+                        position: "left",
 		        display: true,
 		        scaleLabel: {
 			    display: true,
-			    labelString: 'Temperature (\u2103)'
-		        },
-                        ticks: {
-                            suggestedMin: -5,
-                            suggestedMax: 40
-                        }
+			    labelString: "Temperature (\u2103)"
+		        }
                       },
                       {
-                        id: 'humidity',
-                        position: 'right',
+                        id: "humidity",
+                        position: "right",
                         display: true,
                         // grid line settings
 			gridLines: {
@@ -155,12 +155,8 @@
 			},
 		        scaleLabel: {
 			    display: true,
-			    labelString: 'Humidity (%)'
-		        },
-                        ticks: {
-                            suggestedMin: 0,
-                            suggestedMax: 100
-                        }
+			    labelString: "Humidity (%)"
+		        }
                      },
                    ]
 	        }
@@ -168,7 +164,7 @@
         }
       }
 
-      makeChart("#dataChart-data", [1,2,3,4,5,6,7,8,9])
+      makeChart("#dataChart-data", [{{active_sensors}}])
     </script>
 
   </body>

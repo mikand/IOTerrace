@@ -12,7 +12,7 @@
 #define SENSOR_PIN           A0
 #define DRY_SENSOR_READ      854
 #define WATER_SENSOR_READ    451
-#define SENSOR_READ_INTERVAL 30000
+#define SENSOR_READ_INTERVAL 1800000
 
 #define DHT_PIN D1
 
@@ -97,7 +97,7 @@ void setup(void) {
   WiFiManagerParameter password("password", "Wifi password",
                                 credentials.password, 40);
   wifiManager.addParameter(&password);
-
+  wifiManager.setConfigPortalTimeout(180);
   wifiManager.autoConnect("IOTerrace");
 
   Serial.println(F("WiFi connected! IP address: "));

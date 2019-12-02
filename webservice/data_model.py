@@ -1,7 +1,7 @@
 import os.path
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, DateTime, String, ForeignKey
+from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Boolean
 from sqlalchemy import create_engine, Float
 from sqlalchemy.orm import relationship, sessionmaker
 
@@ -19,6 +19,7 @@ class Sensor(Base):
     name = Column(String(255), nullable=False)
     port = Column(Integer, nullable=False)
     kind = Column(String(255), nullable=False)
+    enabled = Column(Boolean, nullable=True)
 
 
 class Reading(Base):
@@ -49,5 +50,5 @@ if _created:
     for i in range(8):
         _session.add(Sensor(name='Sensor %s' % i, port=i, kind='humidity'))
     _session.add(Sensor(name='Temperature', port=8, kind='temperature'))
-    _session.add(Sensor(name='Air Humidity', port=9, kind='temperature'))
+    _session.add(Sensor(name='Air Humidity', port=9, kind='humidity'))
     _session.commit()

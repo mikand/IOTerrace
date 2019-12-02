@@ -1,6 +1,7 @@
 var chart = null;
 var lastUpdate = {};
 var activeSensors = null;
+var sensor2id = {}
 
 
 function roundDatum(x) {
@@ -13,6 +14,7 @@ function makeChart(id, sensors) {
     activeSensors = sensors;
     for (var s in sensors) {
         lastUpdate[s] = 0;
+        sensor2id[sensors[s]] = s;
     }
     update();
 }
@@ -57,14 +59,15 @@ function notify(str) {
 }
 
 function update() {
-    for (var port in activeSensors) {
-        $.getJSON("/get_readings/" + port + '/' + lastUpdate[port], function( msg ) {
+    for (var j in activeSensors) {
+        var port = activeSensors[j];
+        $.getJSON("/get_readings/" + port + '/' + lastUpdate[j], function( msg ) {
             if (msg.status == "OK") {
                 var data = msg.data;
                 for (var i=0; i<data.length; i++) {
                     x = moment.unix(data[i].time)
                     v = roundDatum(data[i].value);
-                    addDatum(chart, msg.port, x, v);
+                    addDatum(chart, sensor2id[msg.port], x, v);
                     if (data[i].time > lastUpdate[msg.port]) {
                         lastUpdate[msg.port] = data[i].time;
                     }
